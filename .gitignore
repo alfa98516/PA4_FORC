@@ -36,6 +36,12 @@
 *.exe
 *.out
 *.app
+rpg
 
 # debug information files
 *.dwo
+
+# others
++
+
+
