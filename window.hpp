@@ -47,6 +47,8 @@ class Window {
         std::cout
             << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
         int w = width(element);
+        int h = height(element);
+        if (w == -1 || h == -1) return;
     }
 
   protected:
@@ -68,12 +70,16 @@ class Window {
             if (c == '\n') return w;
             w++;
         }
-        return w;
+        return (w <= 80) ? w : -1;
+    }
+
+    int height(std::string element) {
+        int h = 0;
+        for (char c : element) {
+            if (c == '\n') h++;
+        }
+        return (h <= 19) ? h : -1;
     }
 };
-
-class BattleWindow : public Window {};
-
-class WeaponWindow : public Window {};
 
 #endif
