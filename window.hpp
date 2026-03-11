@@ -65,7 +65,8 @@ class Window {
     int width(std::string element) {
         int w = 0;
         for (char c : element) {
-            if (c == '\n') return w;
+            if (c == '\n')
+                return w;
             w++;
         }
         return w;
