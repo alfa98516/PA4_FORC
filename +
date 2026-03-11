@@ -1,0 +1,20 @@
+#ifndef ENEMY
+#define ENEMY
+
+#include <random>
+class Enemy {
+  public:
+    virtual ~Enemy() = default;
+    std::vector<int> moves;
+    int health;
+    int stamina;
+    std::string name;
+    std::string art;
+
+    virtual int action() { return -1; }
+};
+
+class Minion : Enemy {
+    int action() {}
+}
+#endif

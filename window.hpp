@@ -1,30 +1,11 @@
+#include "enemy.hpp"
+#include <cstddef>
 #include <iostream>
 #include <string>
 
 #ifndef WINDOW
 #define WINDOW
 class Window {
-    std::string mainWindow;
-
-    /*
-     * @brief: Finds the width of a given element.
-     * Example:
-     *  aaaa
-     * aaaaaa
-     *  aaaa
-     * This string would return 6.
-     * @param element: The string we want to measure.
-     * @return int: The width of the element, if the element does not fit, it returns -1.
-     */
-    int width(std::string element) {
-        int w = 0;
-        for (char c : element) {
-            if (c == '\n')
-                return w;
-            w++;
-        }
-        return w;
-    }
 
   public:
     Window() {
@@ -67,5 +48,32 @@ class Window {
             << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
         int w = width(element);
     }
+
+  protected:
+    std::string mainWindow;
+
+    /*
+     * @brief: Finds the width of a given element.
+     * Example:
+     *  aaaa
+     * aaaaaa
+     *  aaaa
+     * This string would return 6.
+     * @param element: The string we want to measure.
+     * @return int: The width of the element, if the element does not fit, it returns -1.
+     */
+    int width(std::string element) {
+        int w = 0;
+        for (char c : element) {
+            if (c == '\n') return w;
+            w++;
+        }
+        return w;
+    }
 };
+
+class BattleWindow : public Window {};
+
+class WeaponWindow : public Window {};
+
 #endif

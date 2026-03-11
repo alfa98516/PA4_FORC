@@ -1,6 +1,8 @@
+#include "enemy.hpp"
 #include "window.hpp"
 #include <iostream>
 int main() {
-    std::string elem = "";
-    Window w = Window();
+    Minion auddi = Minion();
+    Move act = auddi.action();
+    std::cout << act.name << '\n';
 }
