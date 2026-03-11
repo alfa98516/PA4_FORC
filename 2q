@@ -1,6 +1,0 @@
-#include "window.hpp"
-#include <iostream>
-int main() {
-    std::string elem = "";
-    Window w = Window();
-}
