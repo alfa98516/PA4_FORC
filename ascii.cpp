@@ -64,7 +64,7 @@ int main() {
          ||    \\\\            \n\\
        __||   __\\\\           \n\\
     ";
-    std::cout << lille_giant << std::endl;
+    // std::cout << lille_giant << std::endl;
 
     std::string hydra1 = "       \n\\
                 ___              \n\\
@@ -88,4 +88,33 @@ int main() {
              <_|  <_|  <<_|         \n\\
     ";
     // std::cout << hydra1 << std::endl;
+
+    std::string joeschmo = "      \n\\
+            _                     \n\\
+           (_)                    \n\\
+        __--┴--__                 \n\\
+   ┌   //|     |\\\\              \n\\
+   \\  || |     | \\\\            \n\\
+    --|| |_____⌡ ||               \n\\
+          | _ |                   \n\\
+          || ||                   \n\\
+          || ||                   \n\\
+         _||_||                   \n\\
+    ";
+
+    std::string dauhi = "         \n\\
+            _                     \n\\
+           ( )                    \n\\
+            V                     \n\\
+        __--╨--__                 \n\\
+  ┌    //|     |\\\\              \n\\
+   \\  || |     | \\\\            \n\\
+    --|| |     ⌡  ||              \n\\
+         /    /                   \n\\
+        |    |                    \n\\
+         \\   \\                  \n\\
+          \\   \\ __              \n\\
+           ---_____--             \n\\
+    ";
+    std::cout << dauhi << std::endl;
 }
