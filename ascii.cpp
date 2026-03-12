@@ -33,6 +33,24 @@ int main() {
              |    /  |        \\      \n\\
                   |   |       |       \n\\  
     ";
-    std::cout << skitter3 << std::endl;
+    // std::cout << skitter3 << std::endl;
     // std::cout << skitter2 << std::endl;
+
+    std::string giant1 = "                \n\\
+            ↑                             \n\\
+            |        _   _                \n\\
+            |       (_) (_)               \n\\
+           -✝-     _-┴--/_   ---___       \n\\
+            |\\   //|   | \\\\    /  \\   \n\\
+            |  \\// |   |  \\\\  /    \\  \n\\
+                   |___|   \\\\V          \n\\
+                  /     \\   /            \n\\
+                 /_______\\               \n\\
+                 //    \\\\               \n\\ 
+                //      \\\\              \n\\
+                ||       \\\\             \n\\
+              __||      __\\\\            \n\\
+    ";
+
+    std::cout << giant1 << std::endl;
 }
