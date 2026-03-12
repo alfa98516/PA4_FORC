@@ -56,6 +56,9 @@ class Window {
     void draw(std::string element) {
         std::shared_ptr<std::vector<int> > temp = width(element);
         std::vector<int> w = (temp == nullptr) ? std::vector<int>{-1} : *temp.get();
+        for (int i : w) {
+            std::cout << i << '\n';
+        }
         int h = height(element);
         if (w[0] == -1 || h == -1) // element doesn't fit
             return;
@@ -247,8 +250,10 @@ class Window {
         }
 
         for (auto v : wind) {
-            for (auto c : v) {
-                std::cout << c;
+            for (auto ch : v) {
+                for (auto c : ch) {
+                    std::cout << c;
+                }
             }
             std::cout << '\n';
         }
@@ -273,13 +278,15 @@ class Window {
         int currW = 0;
         int maxW = 0;
         std::shared_ptr<std::vector<int> > w = std::make_shared<std::vector<int> >();
-        for (char c : element) {
+        for (char ch : element) {
+            unsigned char c = static_cast<unsigned char>(ch);
+            ;
             if (c == '\n') {
                 w->push_back(currW);
                 if (currW > maxW)
                     maxW = currW;
                 currW = 0;
-            } else {
+            } else if (c < 0x80 || c >= 0xc0) {
                 currW++;
             }
         }
