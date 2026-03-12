@@ -287,23 +287,22 @@ class Window {
     }
 
     std::shared_ptr<std::vector<std::vector<std::string> > > fillWindow() {
-        // fill window in
         auto wind = std::make_shared<std::vector<std::vector<std::string> > >(
-            20, std::vector<std::string>(80));
+            HEIGHT + 2, std::vector<std::string>(WIDTH + 1)); // 21 × 82
         auto& w = *wind.get();
-        for (int i = 0; i < 20; ++i) {
-            for (int j = 0; j < 80; ++j) {
-                if ((i == 0 || i == 19) && ((j > 0 && j < 79) || (j > 0 && j < 79))) {
+        for (int i = 0; i < HEIGHT + 2; ++i) {
+            for (int j = 0; j < WIDTH + 1; ++j) {
+                if ((i == 0 || i == HEIGHT + 1) && (j > 0 && j < WIDTH)) {
                     w[i][j] = "═";
                 } else if (i == 0 && j == 0) {
                     w[0][0] = "╔";
-                } else if (i == 0 && j == 79) {
+                } else if (i == 0 && j == WIDTH) {
                     w[i][j] = "╗";
-                } else if (i == 19 && j == 0) {
+                } else if (i == HEIGHT + 1 && j == 0) {
                     w[i][j] = "╚";
-                } else if (i == 19 && j == 79) {
+                } else if (i == HEIGHT + 1 && j == WIDTH) {
                     w[i][j] = "╝";
-                } else if ((i != 0 && i != 79) && (j == 0 || j == 79)) {
+                } else if ((i > 0 && i < HEIGHT + 1) && (j == 0 || j == WIDTH)) {
                     w[i][j] = "║";
                 } else {
                     w[i][j] = " ";
@@ -312,7 +311,6 @@ class Window {
         }
         return wind;
     }
-
     int height(std::string element) {
         int h = 0;
         for (char c : element) {

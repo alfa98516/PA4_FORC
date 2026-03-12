@@ -15,7 +15,7 @@ int main() {
     int option;
     std::cin >> option;
     w.clearScreen();
-    w.draw(a);
+    w.draw(a, a, a);
     std::cout << "Select: ";
     std::cin >> option;
 }
