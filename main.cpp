@@ -6,7 +6,7 @@
 int main() {
     Window w = Window();
     std::string a = "";
-    std::ifstream f("frogtest.txt");
+    std::ifstream f("./sprites/frogtest.txt");
     std::string s;
     while (getline(f, s))
         a += s + '\n';
@@ -15,7 +15,7 @@ int main() {
     int option;
     std::cin >> option;
     w.clearScreen();
-    w.draw(a);
+    w.draw(a, "a\n");
     std::cout << "Select: ";
     std::cin >> option;
 }
