@@ -1,6 +1,5 @@
 #include "enemy.hpp"
 #include <algorithm>
-#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -45,89 +44,54 @@ class Window {
         // using system('cls') is pretty frowned upon
         std::cout << "\x1b[2J\x1b[1;1H" << std::flush;
     }
+
     /*
-     * @brief: Freaky magic function, I wrote it and I barely know how I did it.
-     *         There are so many potential off by one errors.
+     * @brief: This function was freaky at first, I was working with only print statements, it was
+     * unreadable and very bad. Then i needed to write the other 2 functions and this approach
+     * became convoluted and almost impossible. This new approach uses a matrix of strings.
+     * The reason i don't use a matrix of type char is because the character ║ is more than one
+     * char.
      * @param element: the element we want to place in the window.
      */
-
     void draw(std::string element) {
-        std::cout
-            << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
         std::shared_ptr<std::vector<int> > temp = width(element);
         std::vector<int> w = (temp == nullptr) ? std::vector<int>{-1} : *temp.get();
         int h = height(element);
         if (w[0] == -1 || h == -1) // element doesn't fit
             return;
-        int hCount = 0;
-        int wCount = 0;
-        int wPlacementIdx =
-            (WIDTH - w[0]) / 2; // where should we start printing on the current line?
-        const int hPlacementIdx = (HEIGHT - h) / 2; // on what line can we start printing?
 
-        // add padding for the element.
-        while (hCount < hPlacementIdx) {
+        const int h1PlacementIndex = (HEIGHT - h) / 2; // on what line should we start printing?
 
-            std::cout << "║                                                                    "
-                         "          ║\n";
-            hCount++;
-        }
+        int padding = (WIDTH - w[0]) / 2; // where should we start printing on the current line?
+        auto windPointer = fillWindow();
+        auto& wind = *windPointer.get();
+
+        int k = 0;
+        int i = padding;
         char c;
-        int j = 0;
-        int i = 0;
-        int wPlacementCount = 0;
-        for (int i = 0; i < element.length();) {
-            c = element[i];
-            wPlacementIdx = (WIDTH - w[j]) / 2;
+        int hPlace = h1PlacementIndex;
+        for (int j = 0; j < element.size();) {
+            c = element[j];
+
             if (c == '\n') {
-                while (wPlacementCount <
-                       WIDTH - 2) { // removes the two ║ characters out of the count.
-                    std::cout << " ";
-                    wPlacementCount++;
-                }
-                wPlacementCount = 0;
-                wCount = 0;
-                c = element[++i];
+                hPlace++;
+                k++;
+                i = (WIDTH - w[0]) / 2;
                 j++;
-                std::cout << "║\n";
+                continue;
             }
 
-            if (wCount == 0 && c != '\n') {
-                std::cout << "║";
-            }
+            wind[hPlace][i] = c;
+            j++;
+            i++;
+        }
 
-            while (wCount < wPlacementIdx && c != '\n') {
-                std::cout << " ";
-                wCount++;
-                wPlacementCount++;
-            }
-            if (c != '\n') {
+        for (auto v : wind) {
+            for (auto c : v) {
                 std::cout << c;
-                wPlacementCount++;
-                i++;
             }
+            std::cout << '\n';
         }
-
-        while (wPlacementCount < WIDTH - 1) { // I have no idea why - 1 works here but it does and
-                                              // im not clambering to figure out why.
-            std::cout << " ";
-            wPlacementCount++;
-        }
-
-        std::cout << "║\n";
-        int count = 0;
-        while (count < hPlacementIdx) {
-            std::cout << "║                                                                    "
-                         "          ║\n";
-            count++;
-        }
-        if (hPlacementIdx * 2 + h < HEIGHT) { // fixes an off by one error.
-            std::cout << "║                                                                    "
-                         "          ║\n";
-        }
-
-        std::cout << "╚════════════════════════════════════════════════════════════════════════"
-                     "══════╝\n";
     }
 
     void draw(std::string element1, std::string element2) {
