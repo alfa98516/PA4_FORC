@@ -75,7 +75,7 @@ class Entity {
         std::string sprite = "";
         std::ifstream f("./sprites/" + filename);
         std::string line;
-        while (getline(f,line)) sprite = line + '\n';
+        while (getline(f,line)) sprite += line + '\n';
         f.close();
         return sprite;
     }
