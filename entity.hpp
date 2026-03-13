@@ -31,14 +31,15 @@ class Entity {
     std::pair<Entity*, Entity*> allies;
     virtual Move action() { return Move();}
     void updateStatus(std::shared_ptr<Status> st) {
-        auto it = std::find_if(status.begin(), status.end(), [&](const std::shared_ptr<Status>& s){ return typeid(*s) == typeid(*st); });
+        auto it = std::find_if(status.begin(), status.end(), [&](const std::shared_ptr<Status>& s){ return s->name == st->name; });
         if(it != status.end()){
+            std::cout << "Stacking " << st->name << ": level was " << (*it)->level << " adding " << st->level << "\n";
             (*it)->level += st->level;
-            if (typeid(*st) == typeid(Burning) || typeid(*st) == typeid(Bleed)){
+            if (st->name == "Burning" || st->name == "Bleed"){
                 (*it)->updateDmg();
             }
         } else {
-            status.push_back(st);
+            status.push_back(st->clone());
         }
     }
     void applyStatuses(){ statusManager();};
@@ -179,5 +180,27 @@ class TwoHeadedGiant : public Entity {
         } 
         return moves[moveIdx];
     }
+};
+
+class Dauthi : public Entity {
+    public:
+        explicit Dauthi() : Entity("Dauthi", 200, 20, 3, 3) {
+            moves[1] = Move("Slice", 20, 0, 4, Bleed::create(5, false));
+            moves[2] = Move("Soul sucker", 10, 10, 4);
+            moves[3] = Move("Invisible", 0, 0, 6, Invisible::create(2,true));
+        }
+
+        Move action() {
+            int moveIdx = baseAction();
+            if (moveIdx < 0) {
+                return Move();
+            }
+
+            if (moves[moveIdx].cost > stamina || moves[moveIdx].name == "Rest") {
+                stamina += 5;
+                if (stamina > maxStamina) stamina = maxStamina;
+            } 
+            return moves[moveIdx];
+        }
 };
 #endif

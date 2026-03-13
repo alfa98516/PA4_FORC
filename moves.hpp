@@ -17,20 +17,26 @@ struct Status {
     Status() : level(0) {}
     Status(int _level, bool _self, std::string _name) : level(_level), self(_self), name(_name) {}
 
+    virtual std::shared_ptr<Status> clone() const = 0;
     virtual void decreaseLevel() { level--; }
     virtual int getDmg() { return 0; }
     virtual int getBlock() { return 0; }
     virtual double getScaler() { return 0; }
     virtual void updateDmg() {}
-    virtual bool operator==(const Status st) { return typeid(this) == typeid(st); }
+    virtual bool operator==(const Status& st) { return typeid(*this) == typeid(st); }
 };
 
 struct Burning : public Status {
     int dmg;
-    Burning(int _level, bool _self) : Status(_level, _self, "Burning"), dmg(_level) {}
+    int baseLevel;
+    Burning(int _level, bool _self) : Status(_level, _self, "Burning"), dmg(_level), baseLevel(_level) {}
 
     static std::shared_ptr<Burning> create(int _level, bool _self) {
         return std::make_shared<Burning>(_level, _self);
+    }
+
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Burning>(baseLevel, self); 
     }
 
     int getDmg() override { return dmg; }
@@ -39,12 +45,16 @@ struct Burning : public Status {
 
 struct Bleed : public Status {
     int dmg;
-    Bleed(int _level, bool _self) : Status(_level, _self, "Bleed"), dmg(_level) {}
+    int baseLevel;
+    Bleed(int _level, bool _self) : Status(_level, _self, "Bleed"), dmg(_level), baseLevel(_level) {}
 
     static std::shared_ptr<Bleed> create(int _level, bool _self) {
         return std::make_shared<Bleed>(_level, _self);
     }
 
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Bleed>(baseLevel, self); 
+    }
     void decreaseLevel() override {
         level--;
         dmg--;
@@ -55,43 +65,63 @@ struct Bleed : public Status {
 };
 
 struct Shock : public Status {
-    Shock(int _level, bool _self) : Status(_level, _self, "Shock") {}
+    int baseLevel;
+    Shock(int _level, bool _self) : Status(_level, _self, "Shock"), baseLevel(_level) {}
     static std::shared_ptr<Shock> create(int _level, bool _self) {
         return std::make_shared<Shock>(_level, _self);
+    }
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Shock>(baseLevel, self); 
     }
 };
 
 struct Defense : public Status {
     int block;
-    Defense(int _block, bool _self) : Status(1, _self, "Defense"), block(_block) {}
+    int baseLevel;
+    Defense(int _block, bool _self) : Status(1, _self, "Defense"), block(_block), baseLevel(1) {}
     static std::shared_ptr<Defense> create(int _block, bool _self) {
         return std::make_shared<Defense>(_block, _self);
+    }
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Defense>(baseLevel, self); 
     }
     int getBlock() override { return block; }
 };
 
 struct Weakness : public Status {
     int block;
-    Weakness(int _level, bool _self) : Status(_level, _self, "Weakness"), block(-_level) {}
+    int baseLevel;
+    Weakness(int _level, bool _self) : Status(_level, _self, "Weakness"), block(-_level), baseLevel(_level) {}
     static std::shared_ptr<Weakness> create(int _level, bool _self) {
         return std::make_shared<Weakness>(_level, _self);
+    }
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Weakness>(baseLevel, self); 
     }
     int getBlock() override { return block; }
 };
 
 struct Strength : public Status {
     double scaler;
-    Strength(int _level, bool _self) : Status(_level, _self, "Strength"), scaler(1 + _level * 0.25) {}
+    int baseLevel; 
+    Strength(int _level, bool _self) : Status(_level, _self, "Strength"), scaler(1 + _level * 0.25), baseLevel(_level) {}
     static std::shared_ptr<Strength> create(int _level, bool _self) {
         return std::make_shared<Strength>(_level, _self);
+    }
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Strength>(baseLevel, self); 
     }
     double getScaler() override { return scaler; }
 };
 
 struct Invisible : public Status {
-    Invisible(int _level, bool _self) : Status(_level, _self, "Invisible") {}
+    int baseLevel;
+    Invisible(int _level, bool _self) : Status(_level, _self, "Invisible"), baseLevel(_level) {}
     static std::shared_ptr<Invisible> create(int _level, bool _self) {
         return std::make_shared<Invisible>(_level, _self);
+    }
+    std::shared_ptr<Status> clone() const override { 
+        return std::make_shared<Invisible>(baseLevel, self); 
     }
 };
 

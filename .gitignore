@@ -37,11 +37,11 @@
 *.out
 *.app
 rpg
-
+game
 # debug information files
 *.dwo
 
 # others
 +
 
-
+test.cpp
