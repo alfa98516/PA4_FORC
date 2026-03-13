@@ -1,6 +1,8 @@
 #include "enemy.hpp"
-#include <cstddef>
+#include <algorithm>
+#include <cstring>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #ifndef WINDOW
@@ -42,92 +44,220 @@ class Window {
         // using system('cls') is pretty frowned upon
         std::cout << "\x1b[2J\x1b[1;1H" << std::flush;
     }
+
     /*
-     * @brief: Freaky magic function, I wrote it and I barely know how I did it.
-     *         There are so many potential off by one errors.
+     * @brief: This function was freaky at first, I was working with only print statements, it was
+     * unreadable and very bad. Then i needed to write the other 2 functions and this approach
+     * became convoluted and almost impossible. This new approach uses a matrix of strings.
+     * The reason i don't use a matrix of type char is because the character ║ is more than one
+     * char.
      * @param element: the element we want to place in the window.
      */
-
     void draw(std::string element) {
-        std::cout
-            << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
-        int w = width(element);
+        std::shared_ptr<std::vector<int> > temp = width(element);
+        std::vector<int> w = (temp == nullptr) ? std::vector<int>{-1} : *temp.get();
+        for (int i : w) {
+            std::cout << i << '\n';
+        }
         int h = height(element);
-        if (w == -1 || h == -1) // element doesn't fit
+        if (w[0] == -1 || h == -1) // element doesn't fit
             return;
-        int hCount = 0;
-        int wCount = 0;
-        const int wPlacementIdx =
-            (WIDTH - w) / 2; // where should we start printing on the current line?
-        const int hPlacementIdx = (HEIGHT - h) / 2; // on what line can we start printing?
 
-        // add padding for the element.
-        while (hCount < hPlacementIdx) {
+        const int h1PlacementIndex = (HEIGHT - h) / 2; // on what line should we start printing?
 
-            std::cout << "║                                                                    "
-                         "          ║\n";
-            hCount++;
-        }
+        int padding = (WIDTH - w[0]) / 2; // where should we start printing on the current line?
+        auto windPointer = fillWindow();
+        auto& wind = *windPointer.get();
+
+        int k = 0;
+        int i = padding;
         char c;
-        int i = 0;
-        for (int i = 0; i < element.length();) { // I ommit the increment here because we
-                                                 // dont always want to increment.
-            c = element[i];
+        int hPlace = h1PlacementIndex;
+        for (int j = 0; j < element.size();) {
+            c = element[j];
 
-            if (c == '\n') { // Here I'm adding the trailing spaces behind the the element.
-                int j = 0;
-
-                while (j <
-                       wPlacementIdx - 1) { // wPlacementIdx coincidentaly works here because its
-                    // technically just how much padding to add to the element
-                    std::cout << " ";
-                    j++;
-                }
-                std::cout << "║\n";
-                wCount = 0;
-                c = element[++i];
+            if (c == '\n') {
+                hPlace++;
+                k++;
+                i = (WIDTH - w[0]) / 2;
+                j++;
+                continue;
             }
 
-            if (wCount == 0) // start of the line
-                std::cout << "║";
-
-            while (wCount < wPlacementIdx) { // add padding until we can print a character
-                std::cout << " ";
-                wCount++;
-            }
-            if (wCount >= wPlacementIdx) {
-                std::cout << c;
-                wCount++;
-                i++;
-            }
-        }
-
-        int j = 0;
-        while (j < wPlacementIdx - 1) { // when on the last character, it wont add trailing spaces,
-                                        // since the for loop ends before it can attempt.
-
-            std::cout << " ";
+            wind[hPlace][i] = c;
             j++;
+            i++;
         }
 
-        std::cout << "║\n";
-        int count = 0;
-        while (count < hPlacementIdx) {
-            std::cout << "║                                                                    "
-                         "          ║\n";
-            count++;
+        for (auto v : wind) {
+            for (auto c : v) {
+                std::cout << c;
+            }
+            std::cout << '\n';
         }
-        if (hPlacementIdx * 2 + h < HEIGHT) { // fixes an off by one error.
-            std::cout << "║                                                                    "
-                         "          ║\n";
-        }
-
-        std::cout << "╚════════════════════════════════════════════════════════════════════════"
-                     "══════╝\n";
     }
 
-    void draw(std::string element1, std::string element2) {}
-    void draw(std::string element1, std::string element2, std::string element3) {}
+    void draw(std::string element1, std::string element2) {
+        std::shared_ptr<std::vector<int> > temp1 = width(element1);
+        std::vector<int> w1 = (temp1 == nullptr) ? std::vector<int>{-1} : *temp1.get();
+        int h1 = height(element1);
+        if (w1[0] == -1 || h1 == -1) // element doesn't fit
+            return;
+        std::shared_ptr<std::vector<int> > temp2 = width(element2);
+        std::vector<int> w2 = (temp2 == nullptr) ? std::vector<int>{-1} : *temp2.get();
+        int h2 = height(element2);
+        if (w2[0] == -1 || h2 == -1) // element doesn't fit
+            return;
+
+        const int h1PlacementIndex = (HEIGHT - h1) / 2;
+        const int h2PlacementIndex = (HEIGHT - h2) / 2;
+        auto windPointer = fillWindow();
+        auto& wind = *windPointer.get();
+        int maxW1 = *std::max_element(w1.begin(), w1.end());
+        int maxW2 = *std::max_element(w2.begin(), w2.end());
+        int padding = (WIDTH - maxW1 - maxW2) / 3;
+
+        int k1 = 0;
+        int i = padding;
+        char c;
+        int h1Place = h1PlacementIndex;
+        for (int j = 0; j < element1.size();) {
+            c = element1[j];
+
+            if (c == '\n') {
+                h1Place++;
+                k1++;
+                i = padding + (maxW1 - w1[k1]) / 2;
+                j++;
+                continue;
+            }
+
+            wind[h1Place][i] = c;
+            j++;
+            i++;
+        }
+
+        int k2 = 0;
+        int w2start = padding + maxW1 + padding;
+        i = w2start;
+        int h2place = h2PlacementIndex;
+        for (int j = 0; j < element2.size();) {
+            c = element2[j];
+
+            if (c == '\n') {
+                h2place++;
+                k2++;
+                i = w2start + (maxW2 - w2[k2]) / 2;
+                j++;
+                continue;
+            }
+
+            wind[h2place][i] = c;
+            j++;
+            i++;
+        }
+
+        for (auto v : wind) {
+            for (auto c : v) {
+                std::cout << c;
+            }
+            std::cout << '\n';
+        }
+    }
+
+    void draw(std::string element1, std::string element2, std::string element3) {
+        std::shared_ptr<std::vector<int> > temp1 = width(element1);
+        std::vector<int> w1 = (temp1 == nullptr) ? std::vector<int>{-1} : *temp1.get();
+        int h1 = height(element1);
+        if (w1[0] == -1 || h1 == -1) // element doesn't fit
+            return;
+
+        std::shared_ptr<std::vector<int> > temp2 = width(element2);
+        std::vector<int> w2 = (temp2 == nullptr) ? std::vector<int>{-1} : *temp2.get();
+        int h2 = height(element2);
+        if (w2[0] == -1 || h2 == -1) // element doesn't fit
+            return;
+
+        std::shared_ptr<std::vector<int> > temp3 = width(element3);
+        std::vector<int> w3 = (temp3 == nullptr) ? std::vector<int>{-1} : *temp3.get();
+        int h3 = height(element3);
+        if (w3[0] == -1 || h3 == -1) // element doesn't fit
+            return;
+
+        const int h1PlacementIndex = (HEIGHT - h1) / 2;
+        const int h2PlacementIndex = (HEIGHT - h2) / 2;
+        const int h3PlacementIndex = (HEIGHT - h3) / 2;
+        int maxW1 = *std::max_element(w1.begin(), w1.end());
+        int maxW2 = *std::max_element(w2.begin(), w2.end());
+        int maxW3 = *std::max_element(w3.begin(), w3.end());
+        int padding = (WIDTH - maxW1 - maxW2 - maxW3) / 4;
+
+        auto windPointer = fillWindow();
+        auto& wind = *windPointer.get();
+
+        int h1Place = h1PlacementIndex;
+        char c;
+        int k1 = 0;
+        int i = padding;
+        for (int j = 0; j < element1.size();) {
+            c = element1[j];
+            if (c == '\n') {
+                h1Place++;
+                k1++;
+                i = padding + (maxW1 - w1[k1]) / 2;
+                j++;
+                continue;
+            }
+            wind[h1Place][i] = c;
+            j++;
+            i++;
+        }
+
+        int h2place = h2PlacementIndex;
+        int k2 = 0;
+        int w2Start = padding + maxW1 + padding;
+        i = w2Start;
+        for (int j = 0; j < element2.size();) {
+            c = element2[j];
+            if (c == '\n') {
+                h2place++;
+                k2++;
+                i = w2Start + (maxW2 - w2[k2]) / 2;
+                j++;
+                continue;
+            }
+            wind[h2place][i] = c;
+            j++;
+            i++;
+        }
+
+        int h3place = h3PlacementIndex;
+        int k3 = 0;
+        int w3Start = padding + maxW1 + padding + maxW2 + padding;
+        i = w3Start;
+        for (int j = 0; j < element3.size();) {
+            c = element3[j];
+            if (c == '\n') {
+                h3place++;
+                k3++;
+                i = w3Start + (maxW3 - w3[k3]) / 2;
+                j++;
+                continue;
+            }
+            wind[h3place][i] = c;
+            j++;
+            i++;
+        }
+
+        for (auto v : wind) {
+            for (auto ch : v) {
+                for (auto c : ch) {
+                    std::cout << c;
+                }
+            }
+            std::cout << '\n';
+        }
+    }
 
   protected:
     std::string mainWindow;
@@ -144,16 +274,50 @@ class Window {
      * @param element: The string we want to measure.
      * @return int: The width of the element, if the element does not fit, it returns -1.
      */
-    int width(std::string element) {
-        int w = 0;
-        for (char c : element) {
-            if (c == '\n')
-                return w;
-            w++;
+    std::shared_ptr<std::vector<int> > width(std::string element) {
+        int currW = 0;
+        int maxW = 0;
+        std::shared_ptr<std::vector<int> > w = std::make_shared<std::vector<int> >();
+        for (char ch : element) {
+            unsigned char c = static_cast<unsigned char>(ch);
+            ;
+            if (c == '\n') {
+                w->push_back(currW);
+                if (currW > maxW)
+                    maxW = currW;
+                currW = 0;
+            } else if (c < 0x80 || c >= 0xc0) {
+                currW++;
+            }
         }
-        return (w <= WIDTH) ? w : -1;
+        return (maxW <= WIDTH) ? w : nullptr;
     }
 
+    std::shared_ptr<std::vector<std::vector<std::string> > > fillWindow() {
+        auto wind = std::make_shared<std::vector<std::vector<std::string> > >(
+            HEIGHT + 2, std::vector<std::string>(WIDTH + 1)); // 21 × 82
+        auto& w = *wind.get();
+        for (int i = 0; i < HEIGHT + 2; ++i) {
+            for (int j = 0; j < WIDTH + 1; ++j) {
+                if ((i == 0 || i == HEIGHT + 1) && (j > 0 && j < WIDTH)) {
+                    w[i][j] = "═";
+                } else if (i == 0 && j == 0) {
+                    w[0][0] = "╔";
+                } else if (i == 0 && j == WIDTH) {
+                    w[i][j] = "╗";
+                } else if (i == HEIGHT + 1 && j == 0) {
+                    w[i][j] = "╚";
+                } else if (i == HEIGHT + 1 && j == WIDTH) {
+                    w[i][j] = "╝";
+                } else if ((i > 0 && i < HEIGHT + 1) && (j == 0 || j == WIDTH)) {
+                    w[i][j] = "║";
+                } else {
+                    w[i][j] = " ";
+                }
+            }
+        }
+        return wind;
+    }
     int height(std::string element) {
         int h = 0;
         for (char c : element) {
