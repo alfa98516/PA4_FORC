@@ -96,7 +96,7 @@ struct Weakness : public Status {
         return std::make_shared<Weakness>(_level, _self);
     }
     std::shared_ptr<Status> clone() const override { 
-        return std::make_shared<Weakness>(block, self); 
+        return std::make_shared<Weakness>(-block, self); 
     }
     int getBlock() override { return block; }
 };

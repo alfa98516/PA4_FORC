@@ -158,9 +158,9 @@ class Player : public Entity{
 class Minion : public Entity {
   public:
     explicit Minion() : Entity("Minion", 50, 10, 3, 4) {
-        moves[1] = Move("Kick", 10, 0, 2, "Deal 10");
-        moves[2] = Move("Observe", 0, 0, 4, "Add 10 weakness to enemy", Weakness::create(10, false));
-        moves[3] = Move("Block", 0, 0, 1, "Take 10 less damage this turn", Defense::create(10, true));
+        moves[1] = Move("Kick", 10, 0, 2, "");
+        moves[2] = Move("Observe", 0, 0, 4, "", Weakness::create(10, false));
+        moves[3] = Move("Block", 0, 0, 1, "", Defense::create(10, true));
 
         moves[4] = Move("Fuck You", 2000000, 0, 300000000,"FUCK YOU",
                         std::vector<std::shared_ptr<Status>>{Burning::create(100, false), Shock::create(100, false), Bleed::create(100, false), Weakness::create(100, false)});
@@ -279,9 +279,9 @@ class Hydra2 : public Entity {
     public:
         explicit Hydra2() : Entity("Hydra", 300, 30, 4, 4) {
             moves[1] = Move("Fire Blast", 15, 0, 10, "", Burning::create(2, false));
-            moves[2] = Move("Electric Breath", 10, 0, 10, "", Shock::create(1, false));
+            moves[2] = Move("Claw Storm", 10, 0, 10, "", Bleed::create(2, false));
             moves[3] = Move("Decay", 0, 0, 10, "", Weakness::create(10, false));
-            moves[4] = Move("Element rings", 10, 0, 30, "", std::vector<std::shared_ptr<Status>> {Defense::create(10, true), Burning::create(1, false), Weakness::create(10,false), Shock::create(1,false)});
+            moves[4] = Move("Element rings", 10, 0, 30, "", std::vector<std::shared_ptr<Status>> {Defense::create(10, true), Burning::create(1, false), Weakness::create(10,false), Bleed::create(1,false)});
             art = getSprite("hydra2.txt");
         }
 
