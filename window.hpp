@@ -1,4 +1,3 @@
-#include "enemy.hpp"
 #include <algorithm>
 #include <cstring>
 #include <iostream>

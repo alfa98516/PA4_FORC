@@ -1,4 +1,4 @@
-#include "enemy.hpp"
+#include "entity.hpp"
 #include <random>
 #include <iostream>
 bool quit = false;
