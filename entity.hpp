@@ -99,7 +99,7 @@ class Entity {
     Entity(std::string _name, int _health, int _stamina, int b, int nMoves)
         : health(_health), stamina(_stamina), name(_name), dist(0, b), moves(nMoves + 1),
           defense(0), attack(1), maxStamina(_stamina), maxHealth(_health) {
-        moves[0] = Move("Rest", 0, 0, 0);
+        moves[0] = Move("Rest", 0, 0, 0, "Restore 5 stamina");
         allies = std::make_pair(nullptr, nullptr);
     }
 };
@@ -107,12 +107,16 @@ class Entity {
 class Player : public Entity{
     public:
         explicit Player(std::string _name) : Entity(_name, 100, 20, 0, 3){
-            moves[1] = Move("Punch", 20, 0, 4);
-            moves[2] = Move("Block", 0,  0, 2, Defense::create(10, true));
-            moves[3] = Move("Heal",  0,  40, 6);
+            moves[1] = Move("Punch", 20, 0, 4, "Deal 20 damage");
+            moves[2] = Move("Block", 0, 0, 2, "Block 10 incoming damage", Defense::create(10, true));
+            moves[3] = Move("Heal",  0, 40, 6, "Heal 40 HP");
         }
         
         Move action() override {
+            if (shocked) {
+                std::cout << " are shocked so you do nothing";
+                return Move();
+            }
             int i = 1;
             for (Move move : moves) {
                 std::cout << i << "  " << move.name << " Cost: " << move.cost << "\n";
@@ -141,11 +145,11 @@ class Player : public Entity{
 class Minion : public Entity {
   public:
     explicit Minion() : Entity("Minion", 50, 10, 3, 4) {
-        moves[1] = Move("Kick", 10, 0, 2);
-        moves[2] = Move("Observe", 0, 0, 4, Weakness::create(10, false));
-        moves[3] = Move("Block", 0, 0, 1, Defense::create(10, true));
+        moves[1] = Move("Kick", 10, 0, 2, "Deal 10");
+        moves[2] = Move("Observe", 0, 0, 4, "Add 10 weakness to enemy", Weakness::create(10, false));
+        moves[3] = Move("Block", 0, 0, 1, "Take 10 less damage this turn", Defense::create(10, true));
 
-        moves[4] = Move("Fuck You", 2000000, 0, 300000000,
+        moves[4] = Move("Fuck You", 2000000, 0, 300000000,"FUCK YOU",
                         std::vector<std::shared_ptr<Status>>{Burning::create(100, false), Shock::create(100, false), Bleed::create(100, false), Weakness::create(100, false)});
     }
 
@@ -172,9 +176,9 @@ class Minion : public Entity {
 class TwoHeadedGiant : public Entity {
     public:
         explicit TwoHeadedGiant() : Entity("Two Headed Giant", 100, 20, 3, 4) {
-            moves[1] = Move("Sword Slice", 5, 0, 4, Bleed::create(3, false));
-            moves[2] = Move("Axe Cleave", 20, 0, 6);
-            moves[3] = Move("Enrage", 0, 0, 5, std::vector<std::shared_ptr<Status>>{Strength::create(3, true), Weakness::create(10, true)});
+            moves[1] = Move("Sword Slice", 5, 0, 4, "", Bleed::create(3, false));
+            moves[2] = Move("Axe Cleave", 20, 0, 6, "");
+            moves[3] = Move("Enrage", 0, 0, 5, "", std::vector<std::shared_ptr<Status>>{Strength::create(3, true), Weakness::create(10, true)});
             //moves[4] = Move("Double Strike") Maybe???
         }
     
@@ -195,9 +199,9 @@ class TwoHeadedGiant : public Entity {
 class Dauthi : public Entity {
     public:
         explicit Dauthi() : Entity("Dauthi", 200, 20, 3, 3) {
-            moves[1] = Move("Slice", 20, 0, 4, Bleed::create(3, false));
-            moves[2] = Move("Soul sucker", 10, 10, 4);
-            moves[3] = Move("Invisible", 0, 0, 6, Invisible::create(2,true));
+            moves[1] = Move("Slice", 20, 0, 4, "", Bleed::create(3, false));
+            moves[2] = Move("Soul sucker",  10, 5, 4, "");
+            moves[3] = Move("Invisible", 0, 0, 6, "", Invisible::create(2,true));
         }
 
         Move action() {
@@ -217,11 +221,35 @@ class Dauthi : public Entity {
 class Hydra1 : public Entity {
     public:
         explicit Hydra1() : Entity("Hydra", 100, 20, 3, 3) {
-            moves[1] = Move("Fire cough", 5, 0, 4, Burning::create(1, false));
-            moves[2] = Move("Stomp", 20, 0, 6);
-            moves[3] = Move("Fire ring", 10, 0, 10, std::vector<std::shared_ptr<Status>>{Defense::create(10, true), Burning::create(1, false)});
+            moves[1] = Move("Fire cough", 5, 0, 4, "", Burning::create(1, false));
+            moves[2] = Move("Stomp", 20, 0, 6, "");
+            moves[3] = Move("Fire ring", 10, 0, 10, "", std::vector<std::shared_ptr<Status>>{Defense::create(10, true), Burning::create(1, false)});
         }
 
+        Move action() {
+            int moveIdx = baseAction();
+            if (moveIdx < 0) {
+                return Move();
+            }
+
+            if (moves[moveIdx].cost > stamina || moves[moveIdx].name == "Rest") {
+                stamina += 5;
+                if (stamina > maxStamina) stamina = maxStamina;
+            } 
+            return moves[moveIdx];
+        }
+};
+
+class Hydra2 : public Entity {
+    public:
+        explicit Hydra2() : Entity("Hydra", 300, 30, 4, 4) {
+            moves[1] = Move("Fire Blast", 15, 0, 10, "", Burning::create(2, false));
+            moves[2] = Move("Electric Breath", 10, 0, 10, "", Shock::create(2, false));
+            moves[3] = Move("Decay", 0, 0, 10, "", Weakness::create(10, false));
+            moves[4] = Move("Element rings", 10, 0, 30, "", std::vector<std::shared_ptr<Status>> {Defense::create(10, true), Burning::create(1, false), Weakness::create(10,false), Shock::create(2,false)});
+        }
+
+        
         Move action() {
             int moveIdx = baseAction();
             if (moveIdx < 0) {

@@ -91,12 +91,12 @@ struct Defense : public Status {
 struct Weakness : public Status {
     int block;
     int baseLevel;
-    Weakness(int _level, bool _self) : Status(_level, _self, "Weakness"), block(-_level), baseLevel(_level) {}
+    Weakness(int _block, bool _self) : Status(1, _self, "Weakness"), block(-_block), baseLevel(1) {}
     static std::shared_ptr<Weakness> create(int _level, bool _self) {
         return std::make_shared<Weakness>(_level, _self);
     }
     std::shared_ptr<Status> clone() const override { 
-        return std::make_shared<Weakness>(baseLevel, self); 
+        return std::make_shared<Weakness>(block, self); 
     }
     int getBlock() override { return block; }
 };
@@ -131,16 +131,17 @@ class Move {
     int attackPower;
     int heal;
     int cost;
+    std::string description;
     std::vector<std::shared_ptr<Status>> status;
     Move() {}
-    Move(std::string _name, int _attackPower, int _heal, int _cost, std::vector<std::shared_ptr<Status>> _status)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status(_status) {}
+    Move(std::string _name, int _attackPower, int _heal, int _cost, std::string _description, std::vector<std::shared_ptr<Status>> _status)
+        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), description(_description), status(_status) {}
 
-    Move(std::string _name, int _attackPower, int _heal, int _cost, std::shared_ptr<Status> _status)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status{_status} {}
+    Move(std::string _name, int _attackPower, int _heal, int _cost, std::string _description, std::shared_ptr<Status> _status)
+        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), description(_description), status{_status} {}
 
-    Move(std::string _name, int _attackPower, int _heal, int _cost)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status(0) {}
+    Move(std::string _name, int _attackPower, int _heal, int _cost, std::string _description)
+        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), description(_description), status(0) {}
 };
 
 #endif
