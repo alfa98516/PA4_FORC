@@ -83,7 +83,7 @@ struct Defense : public Status {
         return std::make_shared<Defense>(_block, _self);
     }
     std::shared_ptr<Status> clone() const override { 
-        return std::make_shared<Defense>(baseLevel, self); 
+        return std::make_shared<Defense>(block, self); 
     }
     int getBlock() override { return block; }
 };

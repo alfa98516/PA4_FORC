@@ -43,6 +43,15 @@ class Entity {
         }
     }
     void applyStatuses(){ statusManager();};
+    Entity(const Entity& other)
+        : health(other.health), maxHealth(other.maxHealth), stamina(other.stamina),
+        maxStamina(other.maxStamina), name(other.name), art(other.art),
+        dist(other.dist), defense(other.defense), attack(other.attack),
+        shocked(other.shocked), allies(other.allies), moves(other.moves) {
+        for (const auto& st : other.status) {
+            status.push_back(st->clone());
+        }
+    }
   protected:
     virtual int baseAction() {
         if (shocked) {
@@ -117,6 +126,7 @@ class Player : public Entity{
                 std::cin >> choice;
                 if (choice < 1 || choice > moves.size()){
                     std::cout << "Not a viable move" << "\n";
+                    continue;
                 }
                 move = moves[choice-1];
                 if(stamina < move.cost){
@@ -162,8 +172,8 @@ class Minion : public Entity {
 class TwoHeadedGiant : public Entity {
     public:
         explicit TwoHeadedGiant() : Entity("Two Headed Giant", 100, 20, 3, 4) {
-            moves[1] = Move("Sword Slice", 20, 0, 4, Bleed::create(5, false));
-            moves[2] = Move("Axe Cleave", 40, 0, 6);
+            moves[1] = Move("Sword Slice", 5, 0, 4, Bleed::create(3, false));
+            moves[2] = Move("Axe Cleave", 20, 0, 6);
             moves[3] = Move("Enrage", 0, 0, 5, std::vector<std::shared_ptr<Status>>{Strength::create(3, true), Weakness::create(10, true)});
             //moves[4] = Move("Double Strike") Maybe???
         }
@@ -185,7 +195,7 @@ class TwoHeadedGiant : public Entity {
 class Dauthi : public Entity {
     public:
         explicit Dauthi() : Entity("Dauthi", 200, 20, 3, 3) {
-            moves[1] = Move("Slice", 20, 0, 4, Bleed::create(5, false));
+            moves[1] = Move("Slice", 20, 0, 4, Bleed::create(3, false));
             moves[2] = Move("Soul sucker", 10, 10, 4);
             moves[3] = Move("Invisible", 0, 0, 6, Invisible::create(2,true));
         }
@@ -203,4 +213,27 @@ class Dauthi : public Entity {
             return moves[moveIdx];
         }
 };
+
+class Hydra1 : public Entity {
+    public:
+        explicit Hydra1() : Entity("Hydra", 100, 20, 3, 3) {
+            moves[1] = Move("Fire cough", 5, 0, 4, Burning::create(1, false));
+            moves[2] = Move("Stomp", 20, 0, 6);
+            moves[3] = Move("Fire ring", 10, 0, 10, std::vector<std::shared_ptr<Status>>{Defense::create(10, true), Burning::create(1, false)});
+        }
+
+        Move action() {
+            int moveIdx = baseAction();
+            if (moveIdx < 0) {
+                return Move();
+            }
+
+            if (moves[moveIdx].cost > stamina || moves[moveIdx].name == "Rest") {
+                stamina += 5;
+                if (stamina > maxStamina) stamina = maxStamina;
+            } 
+            return moves[moveIdx];
+        }
+};
+
 #endif
