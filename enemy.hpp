@@ -4,95 +4,18 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+#include "moves.hpp"
+#include <memory>
 
-#ifndef MOVES
-#define MOVES
-
-struct Status {
-    virtual ~Status() = default;
-    int level;
-    Status() : level(0) {}
-    Status(int _level) : level(_level) {}
-
-    virtual void decreaseLevel() { level--; }
-    virtual int getDmg() { return 0; }
-    virtual int getBlock() { return 0; }
-    virtual double getScaler() { return 0; }
-
-    virtual bool operator==(const Status st) { return typeid(this) == typeid(st); }
-};
-
-struct Burning : public Status {
-    int dmg;
-    Burning(int _level) : Status(_level), dmg(_level) {}
-    int getDmg() override { return dmg; }
-};
-
-struct Bleed : public Status {
-    int dmg;
-    Bleed(int _level) : Status(_level), dmg(_level) {}
-
-    void decreaseLevel() override {
-        level--;
-        dmg--;
-    }
-
-    int getDmg() override { return dmg; }
-};
-
-struct Shock : public Status {
-    Shock(int _level) : Status(_level) {}
-};
-
-struct Defense : public Status {
-    int block;
-    Defense(int _block) : Status(1), block(_block) {}
-    int getBlock() override { return block; }
-};
-
-struct Weakness : public Status {
-    int block;
-    Weakness(int _level) : Status(_level), block(-_level) {}
-
-    int getBlock() override { return block; }
-};
-
-struct Strength : public Status {
-    double scaler;
-
-    Strength(int _level) : Status(_level), scaler(1 + _level * 0.25) {}
-
-    double getScaler() override { return scaler; }
-};
-
-class Move {
-  public:
-    std::string name;
-    int attackPower;
-    int heal;
-    int cost;
-    std::vector<Status> status;
-    Move() {}
-    Move(std::string _name, int _attackPower, int _heal, int _cost, std::vector<Status> _status)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status(_status) {}
-
-    Move(std::string _name, int _attackPower, int _heal, int _cost, Status _status)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status{_status} {}
-
-    Move(std::string _name, int _attackPower, int _heal, int _cost)
-        : name(_name), attackPower(_attackPower), heal(_heal), cost(_cost), status(0) {}
-};
-
-#endif
-#ifndef ENEMY
-#define ENEMY
-class Enemy {
+#ifndef ENTITY
+#define ENTITY
+class Entity {
   public:
     std::random_device seed = std::random_device{
         "rdrand"}; // Looks for a device connected to the computer that can generate
                    // non-deterministic, true random numbers. Pretty intensive
                    // (around 300 clock cycles). We use this as the seed.
-    virtual ~Enemy() = default;
+    virtual ~Entity() = default;
     std::vector<Move> moves;
     int health;
     const int maxHealth;
@@ -101,14 +24,26 @@ class Enemy {
     const int maxStamina;
     std::string name;
     std::string art;
-    std::vector<Status> status;
+    std::vector<std::shared_ptr<Status>> status;
     int defense;
-    bool shocked;
-    std::pair<Enemy*, Enemy*> allies;
-
+    int attack;
+    bool shocked = false;
+    std::pair<Entity*, Entity*> allies;
+    virtual Move action() { return Move();}
+    void updateStatus(std::shared_ptr<Status> st) {
+        auto it = std::find_if(status.begin(), status.end(), [&](const std::shared_ptr<Status>& s){ return typeid(*s) == typeid(*st); });
+        if(it != status.end()){
+            (*it)->level += st->level;
+            if (typeid(*st) == typeid(Burning) || typeid(*st) == typeid(Bleed)){
+                (*it)->updateDmg();
+            }
+        } else {
+            status.push_back(st);
+        }
+    }
+    void applyStatuses(){ statusManager();};
   protected:
     virtual int baseAction() {
-        statusManager();
         if (shocked) {
             return -1;
         }
@@ -118,40 +53,89 @@ class Enemy {
         return moveIdx;
     }
 
+
   protected:
     void statusManager() {
-        for (Status st : status) {
-            if (typeid(st) == typeid(Burning) || typeid(st) == typeid(Bleed)) {
-                health -= st.getDmg();
-            } else if (typeid(st) == typeid(Defense) || typeid(st) == typeid(Weakness)) {
-                defense += st.getBlock();
+        defense = 0;
+        attack = 1;
+        shocked = false;
+        for (auto it = status.begin(); it != status.end();) {
+            if (((*it)->name == "Burning" || (*it)->name == "Bleed") && (*it)->level > 0) {
+                health -= (*it)->getDmg();
+                std::cout << name << " Took " << (*it)->getDmg() << " damage from " << (*it)->name << "\n" ;
+            } else if (((*it)->name == "Defense" || (*it)->name == "Weakness") && (*it)->level > 0) {
+                defense += (*it)->getBlock();
+                std::cout << name << " Got " << (*it)->getBlock() << " defense from " << (*it)->name << "\n";
+            } else if ((*it)->name == "Strength" && (*it)->level) {
+                attack = (*it)->getScaler();
+                std::cout << name << " Got extra " << (*it)->getScaler() << "* Damage from " << (*it)->name << "\n";
+            } else if ((*it)->name == "Shock" && (*it)->level) {
+                shocked = true;
+                std::cout << name << " is shocked for " << (*it)->level << " turns\n";
             }
 
-            st.decreaseLevel();
+            (*it)->decreaseLevel();
 
-            if (st.level <= 0) {
-                status.erase(std::remove(status.begin(), status.end(), st), status.end());
+            if ((*it)->level <= 0) {
+                std::cout << (*it)->name << " has worn off for " << name << "\n";
+                it = status.erase(it);
+            } else {
+                ++it;
             }
         }
     }
 
-    Enemy(std::string _name, int _health, int _stamina, int b, int nMoves)
+
+    Entity(std::string _name, int _health, int _stamina, int b, int nMoves)
         : health(_health), stamina(_stamina), name(_name), dist(0, b), moves(nMoves + 1),
-          defense(0), maxStamina(_stamina), maxHealth(_health), shocked(false) {
+          defense(0), attack(1), maxStamina(_stamina), maxHealth(_health) {
         moves[0] = Move("Rest", 0, 0, 0);
         allies = std::make_pair(nullptr, nullptr);
     }
 };
 
-class Minion : public Enemy {
+class Player : public Entity{
+    public:
+        explicit Player(std::string _name) : Entity(_name, 100, 20, 0, 3){
+            moves[1] = Move("Punch", 20, 0, 4);
+            moves[2] = Move("Block", 0,  0, 2, Defense::create(10, true));
+            moves[3] = Move("Heal",  0,  40, 6);
+        }
+        
+        Move action() override {
+            int i = 1;
+            for (Move move : moves) {
+                std::cout << i << "  " << move.name << " Cost: " << move.cost << "\n";
+                i++;
+            }
+            int choice;
+            bool done = false;
+            Move move;
+            while (!done){
+                std::cout << "Pick a move: ";
+                std::cin >> choice;
+                if (choice < 1 || choice > moves.size()){
+                    std::cout << "Not a viable move" << "\n";
+                }
+                move = moves[choice-1];
+                if(stamina < move.cost){
+                    std::cout << "You don't have enough stamina for this move, please rest first" << "\n";
+                    continue;
+                }
+                done = true;
+            }
+            return move;
+        }
+};
+class Minion : public Entity {
   public:
-    explicit Minion() : Enemy("Minion", 50, 10, 3, 4) {
+    explicit Minion() : Entity("Minion", 50, 10, 3, 4) {
         moves[1] = Move("Kick", 10, 0, 2);
-        moves[2] = Move("Observe", 0, 0, 4, Weakness(2));
-        moves[3] = Move("Block", 0, 0, 1, Defense(10));
+        moves[2] = Move("Observe", 0, 0, 4, Weakness::create(10, false));
+        moves[3] = Move("Block", 0, 0, 1, Defense::create(10, true));
 
-        moves[4] = Move("Fuck You", 200, 0, 300000000,
-                        std::vector<Status>{Burning(100), Shock(100), Bleed(100), Weakness(100)});
+        moves[4] = Move("Fuck You", 2000000, 0, 300000000,
+                        std::vector<std::shared_ptr<Status>>{Burning::create(100, false), Shock::create(100, false), Bleed::create(100, false), Weakness::create(100, false)});
     }
 
     Move action() {
@@ -159,8 +143,6 @@ class Minion : public Enemy {
         if (moveIdx < 0) {
             return Move();
         }
-
-        std::cout << moveIdx << '\n';
 
         static std::uniform_int_distribution<int> fuckYou =
             std::uniform_int_distribution<int>(0, 1000);
@@ -171,20 +153,31 @@ class Minion : public Enemy {
         if (moves[moveIdx].cost > stamina || moves[moveIdx].name == "Rest") {
             stamina += 5;
             if (stamina > maxStamina) stamina = maxStamina;
-            return moves[0];
-        } else {
-            stamina -= moves[moveIdx].cost;
-            if (moves[moveIdx].name == "Kick") {
-                return moves[1];
-
-            } else if (moves[moveIdx].name == "Block") {
-                status.push_back(moves[3].status[0]);
-                return moves[3];
-            } else if (moves[moveIdx].name == "Observe") {
-                return moves[2];
-            }
-        }
+        } 
+        return moves[moveIdx];
     }
 };
 
+class TwoHeadedGiant : public Entity {
+    public:
+        explicit TwoHeadedGiant() : Entity("Two Headed Giant", 100, 20, 3, 4) {
+            moves[1] = Move("Sword Slice", 20, 0, 4, Bleed::create(5, false));
+            moves[2] = Move("Axe Cleave", 40, 0, 6);
+            moves[3] = Move("Enrage", 0, 0, 5, std::vector<std::shared_ptr<Status>>{Strength::create(3, true), Weakness::create(10, true)});
+            //moves[4] = Move("Double Strike") Maybe???
+        }
+    
+    Move action() {
+        int moveIdx = baseAction();
+        if (moveIdx < 0) {
+            return Move();
+        }
+
+        if (moves[moveIdx].cost > stamina || moves[moveIdx].name == "Rest") {
+            stamina += 5;
+            if (stamina > maxStamina) stamina = maxStamina;
+        } 
+        return moves[moveIdx];
+    }
+};
 #endif
